@@ -1,4 +1,4 @@
-# OSINT Toolkit — Phase 1
+# OSINT Toolkit - Phases 1 and 2
 
 A modular FastAPI backend for an academic OSINT cybersecurity project. Phase 1
 delivers `domain_intel` (public WHOIS/DNS) and `network_recon`
@@ -19,6 +19,9 @@ Client
 The feature boundary keeps future modules (`network_recon`, `social_profiling`,
 `breach_check`, and `report_engine`) independent. Add a feature router in
 `backend/app/api/v1/router.py` when it is implemented.
+
+Phase 3 is documented as a planned, ethics-first `social_profiling` module;
+its implementation is intentionally not part of the current codebase.
 
 ## Setup
 
@@ -68,5 +71,7 @@ Authentication is intentionally out of scope for Phase 1. Future security
 dependencies belong in `backend/app/core/security.py` and can be attached to
 feature routers or API versions without mixing auth logic into lookup services.
 
-See [Phase 1 notes](docs/phase1-notes.md) and
-[Phase 2 notes](docs/phase2-notes.md) for design and rate-limit notes.
+See [Phase 1 notes](docs/phase1-notes.md),
+[Phase 2 notes](docs/phase2-notes.md), and
+[Phase 3 notes](docs/phase3-notes.md) for design, methodology, and
+rate-limit notes.
