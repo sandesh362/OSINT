@@ -1,8 +1,9 @@
-# OSINT Toolkit - Phases 1 and 2
+# OSINT Toolkit - Phases 1–3
 
 A modular FastAPI backend for an academic OSINT cybersecurity project. Phase 1
-delivers `domain_intel` (public WHOIS/DNS) and `network_recon`
-(Shodan-backed exposed-host intelligence) through a versioned API.
+delivers `domain_intel` (public WHOIS/DNS), `network_recon`
+(Shodan-backed exposed-host intelligence), and `social_profiling` (public
+username profile existence checks) through a versioned API.
 
 ```
 Client
@@ -14,14 +15,13 @@ Client
   +-- /network-recon router -> service --> provider client --> Shodan API
                                  |                 |
                                  +--> audit logs    +--> TTL host cache
+  +-- /social-profiling router -> async service --> public profile URLs
+                                      |                 |
+                                      +--> TTL cache    +--> capped concurrency
 ```
 
-The feature boundary keeps future modules (`network_recon`, `social_profiling`,
-`breach_check`, and `report_engine`) independent. Add a feature router in
-`backend/app/api/v1/router.py` when it is implemented.
-
-Phase 3 is documented as a planned, ethics-first `social_profiling` module;
-its implementation is intentionally not part of the current codebase.
+The feature boundary keeps future modules (`breach_check` and `report_engine`)
+independent. Each feature router is registered in `backend/app/api/v1/router.py`.
 
 ## Setup
 
@@ -54,9 +54,21 @@ Endpoints:
 - `GET /api/v1/domain-intel/dns?domain=example.com`
 - `GET /api/v1/network-recon/host?ip=1.2.3.4`
 - `GET /api/v1/network-recon/search?query=product:%22Apache%20httpd%22&page=1`
+- `GET /api/v1/social-profiling/username?value=someuser`
 
 Successful responses use `{ "success": true, "data": ..., "meta": { "queried_at": ... } }`.
 Provider errors are normalized to safe 404, 502, or 504 response bodies.
+
+## Social profiling scope and ethics
+
+`social_profiling` checks only exact usernames against configurable public
+profile URL patterns in `backend/app/features/social_profiling/platforms.py`.
+It makes a single unauthenticated HTTP request per platform and returns only
+`found`, `not_found`, or `uncertain`, plus a public page title/description when
+trivially available. It never logs in, accesses private APIs or content,
+bypasses authentication, checks password-recovery flows, or tries to determine
+whether an email address or phone number is linked to an account. A matching
+username is a lead, not identity proof.
 
 ## Shodan API key
 
