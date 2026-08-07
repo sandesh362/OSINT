@@ -30,3 +30,4 @@ class ErrorDetail(BaseModel):
     error: str
     detail: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now().astimezone())
+    retry_after: int | None = None

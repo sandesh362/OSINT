@@ -6,6 +6,9 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import (
+    BreachConfigurationError,
+    BreachRateLimitError,
+    BreachUnavailableError,
     LookupNotFoundError,
     LookupProviderError,
     LookupTimeoutError,
@@ -28,17 +31,20 @@ def create_app() -> FastAPI:
     async def upstream_lookup_exception_handler(_: Request, exc: UpstreamLookupError) -> JSONResponse:
         status_code = 502
         error = "upstream_lookup_failed"
-        if isinstance(exc, ShodanConfigurationError):
+        if isinstance(exc, (ShodanConfigurationError, BreachConfigurationError)):
             status_code, error = 500, "provider_configuration_error"
-        elif isinstance(exc, ShodanRateLimitError):
+        elif isinstance(exc, (ShodanRateLimitError, BreachRateLimitError)):
             status_code, error = 429, "rate_limit_exceeded"
+        elif isinstance(exc, BreachUnavailableError):
+            status_code, error = 503, "provider_unavailable"
         elif isinstance(exc, LookupNotFoundError):
             status_code, error = 404, "not_found"
         elif isinstance(exc, LookupTimeoutError):
             status_code, error = 504, "upstream_timeout"
         elif isinstance(exc, LookupProviderError):
             status_code, error = 502, "upstream_lookup_failed"
-        body = ErrorDetail(error=error, detail=exc.message).model_dump(mode="json")
+        retry_after = exc.retry_after if isinstance(exc, BreachRateLimitError) else None
+        body = ErrorDetail(error=error, detail=exc.message, retry_after=retry_after).model_dump(mode="json", exclude_none=True)
         return JSONResponse(status_code=status_code, content=body)
 
     return app

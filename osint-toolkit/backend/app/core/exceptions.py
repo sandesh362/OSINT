@@ -27,3 +27,19 @@ class ShodanConfigurationError(UpstreamLookupError):
 
 class ShodanRateLimitError(UpstreamLookupError):
     """Shodan rejected a request because its API quota was exhausted."""
+
+
+class BreachConfigurationError(UpstreamLookupError):
+    """The breach provider cannot be used because its credentials are invalid."""
+
+
+class BreachRateLimitError(UpstreamLookupError):
+    """The breach provider rejected a request due to its request limit."""
+
+    def __init__(self, message: str, retry_after: int | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+class BreachUnavailableError(UpstreamLookupError):
+    """The breach provider timed out or is temporarily unavailable."""
