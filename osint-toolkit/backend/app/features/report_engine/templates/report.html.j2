@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OSINT Toolkit Investigation Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #172033; margin: 32px; }
+    h1, h2 { color: #153e75; } table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid #cbd5e1; padding: 7px; vertical-align: top; text-align: left; }
+    th { background: #eaf1fb; width: 28%; } .status { font-weight: bold; text-transform: capitalize; }
+    .unavailable { color: #9f1239; } footer { margin-top: 28px; border-top: 1px solid #cbd5e1; padding-top: 12px; }
+  </style>
+</head>
+<body>
+  {% macro render_value(value) -%}
+    {% if value is mapping %}
+      <table>{% for key, item in value.items() %}<tr><th>{{ key | replace('_', ' ') | title }}</th><td>{{ render_value(item) }}</td></tr>{% endfor %}</table>
+    {% elif value is sequence and value is not string %}
+      <ul>{% for item in value %}<li>{{ render_value(item) }}</li>{% endfor %}</ul>
+    {% else %}{{ value if value is not none else 'Not reported' }}{% endif %}
+  {%- endmacro %}
+
+  <h1>OSINT Toolkit Investigation Report</h1>
+  <p><strong>Report ID:</strong> {{ report.report_id }}<br>
+     <strong>Generated:</strong> {{ report.generated_at }}<br>
+     <strong>Modules requested:</strong> {{ report.requested_modules | join(', ') }}</p>
+  <h2>Target Identifiers</h2>
+  {{ render_value(report.target.model_dump()) }}
+
+  {% for section in report.sections if section.status != 'not_requested' %}
+    <section>
+      <h2>{{ section.title }}</h2>
+      <p class="status {% if section.status == 'unavailable' %}unavailable{% endif %}">{{ section.status }} — {{ section.summary }}</p>
+      {% if section.error_message %}<p class="unavailable">{{ section.error_message }}</p>{% endif %}
+      {% if section.data %}{{ render_value(section.data) }}{% endif %}
+    </section>
+  {% endfor %}
+
+  <h2>Findings Summary</h2>
+  <ul>{% for finding in report.findings %}<li>{{ finding }}</li>{% endfor %}</ul>
+  <footer><strong>Limitations:</strong> {{ report.limitations }}</footer>
+</body>
+</html>
