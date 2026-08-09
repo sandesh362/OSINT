@@ -1,0 +1,1 @@
+export function ReportPreview({ html }: { html: string }) { return <section className="report-preview"><h3>Report preview</h3><iframe title="Investigation report preview" srcDoc={html} sandbox="allow-popups" /></section>; }
