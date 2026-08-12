@@ -5,7 +5,7 @@ import time
 from typing import Protocol
 
 from app.core.logging import get_logger
-from app.features.breach_check.client import HIBPClient
+from app.features.breach_check.client import XposedOrNotClient
 from app.features.breach_check.schemas import BreachCheckData, BreachSummary
 
 
@@ -27,7 +27,7 @@ class BreachCheckService:
         cache: dict[str, tuple[float, BreachCheckData]] | None = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        self.client = client or HIBPClient()
+        self.client = client or XposedOrNotClient()
         self.cache = _breach_cache if cache is None else cache
         self.clock = clock
 
@@ -40,5 +40,5 @@ class BreachCheckService:
         breaches = await self.client.breaches_for_email(value)
         data = BreachCheckData(value=value, breached=bool(breaches), breaches=breaches)
         self.cache[value] = (self.clock() + BREACH_CACHE_TTL_SECONDS, data)
-        logger.info("breach_check query succeeded source=hibp")
+        logger.info("breach_check query succeeded source=xposedornot")
         return data

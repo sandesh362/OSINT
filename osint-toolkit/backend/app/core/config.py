@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     dns_timeout_seconds: float = 5.0
     dns_lifetime_seconds: float = 10.0
     shodan_api_key: str = ""
-    breach_api_key: str = ""
+    xon_base_url: str = "https://api.xposedornot.com"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

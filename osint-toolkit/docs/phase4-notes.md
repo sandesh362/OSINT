@@ -2,54 +2,20 @@
 
 ## Provider choice and terms
 
-Phase 4 uses the Have I Been Pwned (HIBP) API v3 `breachedAccount` endpoint.
-It is a reputable, purpose-built source that returns breach metadata without
-requiring this academic project to download or operate breach databases. Email
-search requires an HIBP subscription key (`BREACH_API_KEY`) and an identifying
-User-Agent. HIBP publishes constrained test addresses and test-key guidance,
-but normal email lookup requires an eligible subscription plan.
-
-The implementation must comply with HIBP's acceptable-use and attribution
-requirements: it identifies HIBP as the data source, does not query for harm,
-does not attempt to bypass controls, and does not present HIBP data as its own.
-See the official [HIBP API documentation](https://haveibeenpwned.com/API/v3)
-for the current endpoint, plan, attribution, and rate-limit terms.
+Phase 4 uses the free [XposedOrNot breach-analytics API](https://xposedornot.com/api), an open-source breach-exposure lookup service. The selected `GET /v1/breach-analytics?email=...` endpoint needs no API key; a key would be relevant only to the out-of-scope domain-breaches endpoint. XposedOrNot's published free-tier limits for this endpoint are 2 requests/second, 25 requests/hour, and 100 requests/day per IP. Contributors must follow the provider's current terms and acceptable-use requirements. Its open-source status is useful to cite in the report's Literature Review/Tools section.
 
 ## Ethical and legal boundary
 
-The module is only a client of HIBP. It never obtains, mirrors, scrapes,
-hosts, reconstructs, or displays breach dumps, leaked passwords, hashes, or
-credential records. Its output is strictly a public metadata summary: breach
-name, breach date, exposed data-class categories, and an HIBP public reference
-link. A breach indication is risk information, not authorisation to access an
-account or confirmation of identity.
+This module is only a client of the provider's existing metadata service. It never obtains, mirrors, scrapes, hosts, reconstructs, or displays breach dumps, password lists, leaked credentials, passwords, hashes, or raw breach records. It returns only the breach name, breach date, exposed data-class categories, and a short provider description. A breach indication communicates risk; it is not authorisation to access an account or proof of identity.
 
-The queried email is the only personal data used. It is sent to HIBP as
-required by the selected endpoint, is never written to application logs, and
-is retained only as a key/value in the process-local 15-minute TTL cache. The
-cache is not persistent and is lost on process restart. API keys are read from
-environment configuration and are neither logged nor returned.
+The queried email is the only personal data in play. It is sent to XposedOrNot for the lookup, is not logged, and is retained only as a key/value in a process-local 15-minute TTL cache. That cache is not persistent and disappears on restart.
 
-## Throttling, errors, and cache
+## Throttling, cache, and errors
 
-Every HIBP request passes through a process-wide `asyncio.Lock` and a minimum
-1.6-second interval. This serializes calls before they reach the provider,
-rather than reacting only after a 429. A provider 429 is still surfaced as HTTP
-429 with its `retry_after` value when supplied. Missing or rejected credentials
-become a generic HTTP 500; provider timeouts and service failures become HTTP
-503 without provider internals.
+The client uses a process-wide `asyncio.Lock` with a 0.5-second minimum interval, independently of callers. This enforces the 2 requests/second limit before making requests instead of waiting for a 429. A 15-minute per-email TTL cache covers both breached and clean outcomes. It reduces duplicate requests during testing and demonstrations, which is especially important against the 25/hour cap; tests use fake providers and make no network requests.
 
-Successful results, including clean results, are cached per normalized email
-for 15 minutes. This avoids wasteful repeat calls during a demonstration or
-report-writing session and reduces the likelihood of exhausting a subscription
-quota. Tests replace the provider entirely; no test needs an API key or makes a
-network request.
+Provider 429 responses become HTTP 429 with “rate limit reached, try again later.” Provider 502 and 503 responses become HTTP 503 with “breach data temporarily unavailable.” Malformed provider responses become generic HTTP 502 responses; raw responses are logged only on the server for diagnosis.
 
 ## Methodological note: clean results
 
-`breached: false` is a valid result and returns HTTP 200 with an empty breach
-list. It means no records were returned by the selected provider under its
-current coverage and policy; it does not prove an address has never been
-exposed. Reporting clean results alongside positive results avoids a
-false-negative bias in the Results discussion and makes coverage limitations
-visible.
+`breached: false` and an empty list are valid HTTP 200 outcomes when XposedOrNot returns an all-null or empty breach payload. They mean this provider currently has no matching record, not that the address has never been exposed. Including these results avoids false-negative bias in the Results discussion and makes coverage limitations visible.

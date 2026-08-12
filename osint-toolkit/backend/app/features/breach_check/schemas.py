@@ -29,7 +29,7 @@ class BreachSummary(BaseModel):
     name: str
     breach_date: date | None = None
     data_classes: list[str] = Field(default_factory=list)
-    reference_url: str
+    description: str
 
 
 class BreachCheckData(BaseModel):

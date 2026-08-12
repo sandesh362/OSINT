@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import (
-    BreachConfigurationError,
     BreachRateLimitError,
     BreachUnavailableError,
     LookupNotFoundError,
@@ -56,7 +55,7 @@ def create_app() -> FastAPI:
     async def upstream_lookup_exception_handler(_: Request, exc: UpstreamLookupError) -> JSONResponse:
         status_code = 502
         error = "upstream_lookup_failed"
-        if isinstance(exc, (ShodanConfigurationError, BreachConfigurationError)):
+        if isinstance(exc, ShodanConfigurationError):
             status_code, error = 500, "provider_configuration_error"
         elif isinstance(exc, (ShodanRateLimitError, BreachRateLimitError)):
             status_code, error = 429, "rate_limit_exceeded"

@@ -29,10 +29,6 @@ class ShodanRateLimitError(UpstreamLookupError):
     """Shodan rejected a request because its API quota was exhausted."""
 
 
-class BreachConfigurationError(UpstreamLookupError):
-    """The breach provider cannot be used because its credentials are invalid."""
-
-
 class BreachRateLimitError(UpstreamLookupError):
     """The breach provider rejected a request due to its request limit."""
 
