@@ -91,27 +91,20 @@ class XposedOrNotClient:
         if not isinstance(details, list):
             raise ValueError("breaches_details must be a list")
 
-        summaries = []
+        summaries: list[BreachSummary] = []
         for breach in details:
-            if not isinstance(breach, dict) or not isinstance(breach.get("breach"), str):
-                raise ValueError("invalid breach detail")
-            summaries.append(BreachSummary(
-                name=breach["breach"],
-                breach_date=breach.get("xposed_date") or None,
-                data_classes=XposedOrNotClient._data_classes(breach.get("xposed_data")),
-                description=str(breach.get("details") or "No public description available."),
-            ))
+            try:
+                if not isinstance(breach, dict):
+                    raise TypeError("breach detail must be an object")
+                summaries.append(BreachSummary(
+                    name=breach["breach"],
+                    breach_date=breach["xposed_date"],
+                    data_classes=[item.strip() for item in breach["xposed_data"].split(";") if item.strip()],
+                    description=breach["details"],
+                ))
+            except (AttributeError, KeyError, TypeError, ValueError):
+                logger.warning("module=breach_check action=map_breach target=redacted status=skipped duration_ms=0", exc_info=True)
         return summaries
-
-    @staticmethod
-    def _data_classes(value: Any) -> list[str]:
-        if value is None:
-            return []
-        if isinstance(value, str):
-            return [item.strip() for item in value.replace(";", ",").split(",") if item.strip()]
-        if isinstance(value, list) and all(isinstance(item, str) for item in value):
-            return value
-        raise ValueError("invalid xposed_data")
 
     @staticmethod
     def _log_malformed_response(response: httpx.Response) -> None:

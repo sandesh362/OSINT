@@ -1,6 +1,5 @@
 """Request validation and safe response models for breach checks."""
 
-from datetime import date
 import re
 
 from pydantic import BaseModel, Field, field_validator
@@ -27,7 +26,7 @@ class BreachSummary(BaseModel):
     """Public breach metadata only; credentials and raw leaked records are excluded."""
 
     name: str
-    breach_date: date | None = None
+    breach_date: str | None = None
     data_classes: list[str] = Field(default_factory=list)
     description: str
 

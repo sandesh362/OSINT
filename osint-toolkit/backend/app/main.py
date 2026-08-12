@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
@@ -63,6 +64,11 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_: Request, __: RequestValidationError) -> JSONResponse:
+        return _json_error(422, "validation_error", "Request input is invalid")
+
+    @app.exception_handler(ValidationError)
+    async def pydantic_validation_error(_: Request, __: ValidationError) -> JSONResponse:
+        """Normalize validation raised while FastAPI constructs dependency models."""
         return _json_error(422, "validation_error", "Request input is invalid")
 
     @app.exception_handler(HTTPException)

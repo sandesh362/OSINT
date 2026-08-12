@@ -1,7 +1,8 @@
-"""Shared test fixtures."""
+"""Fixtures shared by all backend tests, including feature-level test folders."""
+
+import socket
 
 import pytest
-import socket
 from fastapi.testclient import TestClient
 
 from app.main import create_app
@@ -23,7 +24,7 @@ def block_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture
 def client() -> TestClient:
-    """Return an isolated test client with dependency overrides reset."""
+    """Return an isolated application with dependency overrides reset."""
     app = create_app()
     with TestClient(app) as test_client:
         yield test_client

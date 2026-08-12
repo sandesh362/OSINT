@@ -1,5 +1,7 @@
 """Breach-check tests using fakes; no test makes a provider network request."""
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from app.core.exceptions import BreachRateLimitError, BreachUnavailableError
@@ -19,6 +21,23 @@ class FakeXposedOrNotClient:
         if isinstance(self.result, Exception):
             raise self.result
         return self.result
+
+
+@pytest.fixture
+def xposedornot_real_response() -> dict[str, object]:
+    """Provider payload fields copied from the supplied live XposedOrNot response."""
+    return {
+        "BreachMetrics": {"risk": [{"risk_label": "Critical", "risk_score": 98}]},
+        "BreachesSummary": {"site": "AlienStealerLogs;ZenBusiness"},
+        "ExposedBreaches": {"breaches_details": [
+            {"breach": "AlienStealerLogs", "details": "ALIEN TXTBASE, a stealer log collection.", "domain": "", "password_risk": "plaintext", "xposed_data": "Email addresses;Passwords", "xposed_date": "2025", "xposed_records": 299646818},
+            {"breach": "ZenBusiness", "details": "ZenBusiness incident summary.", "domain": "zenbusiness.com", "password_risk": "unknown", "xposed_data": "Email addresses;Names;Usernames;Phone numbers;Physical addresses", "xposed_date": "2026", "xposed_records": 11854655},
+            {"breach": "Malformed", "xposed_date": "2024", "xposed_data": ["not a string"], "details": "This entry must be skipped."},
+        ]},
+        "ExposedPastes": None,
+        "PasteMetrics": None,
+        "PastesSummary": {"cnt": 0, "domain": "", "tmpstmp": ""},
+    }
 
 
 def set_service(client: TestClient, service: BreachCheckService) -> None:
@@ -72,12 +91,8 @@ def test_cache_hit_does_not_reissue_provider_call(client: TestClient) -> None:
     assert provider.calls == 1
 
 
-def test_xposedornot_nested_response_is_mapped_to_safe_fields() -> None:
-    result = XposedOrNotClient._to_summaries({
-        "ExposedBreaches": {"breaches_details": [
-            {"breach": "Example", "xposed_date": "2024-01-02", "xposed_data": "Email addresses; Passwords", "details": "Public incident summary.", "password_risk": "high", "xposed_records": 12},
-            {"breach": "Other", "xposed_date": "2023-12-01", "xposed_data": ["Usernames"], "details": "Another summary."},
-        ]},
-    })
-    assert result[0].model_dump(mode="json") == {"name": "Example", "breach_date": "2024-01-02", "data_classes": ["Email addresses", "Passwords"], "description": "Public incident summary."}
-    assert result[1].data_classes == ["Usernames"]
+def test_xposedornot_real_response_is_mapped_to_safe_fields(xposedornot_real_response: dict[str, object]) -> None:
+    result = XposedOrNotClient._to_summaries(xposedornot_real_response)
+    assert result[0].model_dump() == {"name": "AlienStealerLogs", "breach_date": "2025", "data_classes": ["Email addresses", "Passwords"], "description": "ALIEN TXTBASE, a stealer log collection."}
+    assert result[1].data_classes == ["Email addresses", "Names", "Usernames", "Phone numbers", "Physical addresses"]
+    assert len(result) == 2
