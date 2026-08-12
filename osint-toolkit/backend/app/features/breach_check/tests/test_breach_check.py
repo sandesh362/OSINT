@@ -54,14 +54,14 @@ def test_provider_rate_limit_returns_429(client: TestClient) -> None:
     set_service(client, BreachCheckService(FakeXposedOrNotClient(BreachRateLimitError("Rate limit reached, try again later", retry_after=2)), cache={}))
     response = client.get("/api/v1/breach-check/email", params={"value": "limited@example.com"})
     assert response.status_code == 429
-    assert response.json()["detail"] == "Rate limit reached, try again later"
+    assert response.json()["error"]["code"] == "rate_limit_exceeded"
 
 
 def test_provider_503_returns_unavailable_message(client: TestClient) -> None:
     set_service(client, BreachCheckService(FakeXposedOrNotClient(BreachUnavailableError("Breach data temporarily unavailable")), cache={}))
     response = client.get("/api/v1/breach-check/email", params={"value": "offline@example.com"})
     assert response.status_code == 503
-    assert response.json()["detail"] == "Breach data temporarily unavailable"
+    assert response.json()["error"]["code"] == "provider_unavailable"
 
 
 def test_cache_hit_does_not_reissue_provider_call(client: TestClient) -> None:

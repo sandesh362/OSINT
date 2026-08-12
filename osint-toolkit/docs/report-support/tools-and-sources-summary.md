@@ -1,10 +1,10 @@
 # Tools and sources summary
 
-| Module | Tool/API/library | Contribution | Access constraint |
+| Module | Tool/API | Contribution | Constraint |
 |---|---|---|---|
-| domain_intel | `python-whois` | Registrar and registration dates | Public data; coverage varies |
-| domain_intel | `dnspython` | DNS A, AAAA, MX, NS, TXT records | Resolver timeouts apply |
-| network_recon | Shodan SDK/API | Host exposure and search metadata | API key and quota required |
-| social_profiling | `httpx` public HTTP checks | Exact public username page observations | No login; platform behaviour varies |
-| breach_check | XposedOrNot API | Breach names, dates, data categories | No key; 2/sec, 25/hour, 100/day |
-| report_engine | Jinja2/WeasyPrint stack | Aggregated HTML/PDF report | In-memory, temporary output |
+| domain_intel | python-whois | Registration metadata | Public coverage varies |
+| domain_intel | dnspython | DNS records | Resolver timeouts |
+| network_recon | Shodan | Host/search exposure metadata | Key and quota required |
+| social_profiling | httpx public HTTP | Exact username page checks | No login; sites vary |
+| breach_check | XposedOrNot | Breach metadata | No key; 2/sec, 25/hour, 100/day |
+| report_engine | HTML/PDF generators | Aggregated export | Temporary in-memory data |
