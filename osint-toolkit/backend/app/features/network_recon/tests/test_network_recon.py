@@ -52,7 +52,7 @@ def test_host_with_no_shodan_data_returns_404(client: TestClient) -> None:
     set_service(client, NetworkReconService(NoDataClient(), cache={}))
     response = client.get("/api/v1/network-recon/host", params={"ip": "1.2.3.4"})
     assert response.status_code == 404
-    assert response.json()["error"] == "not_found"
+    assert response.json()["error"]["code"] == "not_found"
 
 
 def test_invalid_ip_format_returns_422(client: TestClient) -> None:
@@ -68,7 +68,7 @@ def test_rate_limited_search_returns_429(client: TestClient) -> None:
     set_service(client, NetworkReconService(RateLimitedClient(), cache={}))
     response = client.get("/api/v1/network-recon/search", params={"query": "product:nginx"})
     assert response.status_code == 429
-    assert response.json()["error"] == "rate_limit_exceeded"
+    assert response.json()["error"]["code"] == "rate_limit_exceeded"
 
 
 def test_search_caps_results_and_passes_page_to_client(client: TestClient) -> None:

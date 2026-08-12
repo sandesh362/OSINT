@@ -22,7 +22,7 @@ class SearchQuery(BaseModel):
     def validate_query(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("query must not be blank")
-        return value
+        return value.strip()
 
 
 class Location(BaseModel):

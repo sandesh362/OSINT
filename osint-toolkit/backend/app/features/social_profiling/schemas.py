@@ -18,6 +18,7 @@ class UsernameQuery(BaseModel):
     @field_validator("value")
     @classmethod
     def validate_username(cls, value: str) -> str:
+        value = value.strip()
         if not value or not re.fullmatch(USERNAME_PATTERN, value):
             raise ValueError("value must contain only letters, numbers, underscores, hyphens, or dots")
         return value

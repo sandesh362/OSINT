@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import Response
 
 from app.features.report_engine.generators.html_generator import HtmlReportGenerator
@@ -50,7 +50,7 @@ async def generate_report(
 
 @router.get("/preview/{report_id}", response_model=SuccessResponse[PreviewData])
 async def preview_report(
-    report_id: str,
+    report_id: Annotated[str, Path(pattern=r"^[0-9a-f-]{36}$", max_length=36)],
     service: Annotated[ReportEngineService, Depends(get_report_engine_service)],
 ) -> SuccessResponse[PreviewData]:
     cached = service.take_preview(report_id)

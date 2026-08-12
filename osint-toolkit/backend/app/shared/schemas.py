@@ -1,4 +1,4 @@
-"""Common response envelope models."""
+"""Shared API envelopes used by every JSON endpoint and error handler."""
 
 from datetime import datetime
 from typing import Generic, TypeVar
@@ -10,24 +10,40 @@ DataT = TypeVar("DataT")
 
 
 class ResponseMeta(BaseModel):
-    """Metadata included with successful feature responses."""
+    """Timestamp assigned when the application completes a response."""
 
     queried_at: datetime
 
 
+class ErrorInfo(BaseModel):
+    """Safe, client-facing error information; internal details stay in logs."""
+
+    code: str
+    message: str
+    retry_after: int | None = None
+
+
 class SuccessResponse(BaseModel, Generic[DataT]):
-    """Consistent success envelope for all feature APIs."""
+    """Consistent successful JSON response envelope."""
 
     success: bool = True
     data: DataT
     meta: ResponseMeta
+    error: None = None
 
 
-class ErrorDetail(BaseModel):
-    """Machine-readable application error body."""
+class ErrorResponse(BaseModel):
+    """Consistent failed JSON response envelope."""
 
     success: bool = False
-    error: str
-    detail: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now().astimezone())
-    retry_after: int | None = None
+    data: None = None
+    meta: ResponseMeta
+    error: ErrorInfo
+
+
+def error_envelope(code: str, message: str, *, retry_after: int | None = None) -> ErrorResponse:
+    """Build a safe error response without exposing provider internals."""
+    return ErrorResponse(
+        meta=ResponseMeta(queried_at=datetime.now().astimezone()),
+        error=ErrorInfo(code=code, message=message, retry_after=retry_after),
+    )

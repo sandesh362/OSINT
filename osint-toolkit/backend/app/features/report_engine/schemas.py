@@ -24,7 +24,7 @@ class ReportRequest(BaseModel):
     email: str | None = Field(default=None, max_length=254)
     username: str | None = Field(default=None, max_length=39)
     ip: IPv4Address | IPv6Address | None = None
-    modules: list[ModuleName] = Field(min_length=1)
+    modules: list[ModuleName] = Field(min_length=1, max_length=4)
     format: ReportFormat = "html"
 
     @field_validator("domain")

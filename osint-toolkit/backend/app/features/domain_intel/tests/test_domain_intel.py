@@ -48,7 +48,7 @@ def test_non_resolving_domain_returns_404(client: TestClient) -> None:
     set_service(client, DomainIntelService(NotFoundClient()))
     response = client.get("/api/v1/domain-intel/dns", params={"domain": "missing.example"})
     assert response.status_code == 404
-    assert response.json()["error"] == "not_found"
+    assert response.json()["error"]["code"] == "not_found"
 
 
 def test_whois_timeout_returns_504(client: TestClient) -> None:
@@ -59,12 +59,13 @@ def test_whois_timeout_returns_504(client: TestClient) -> None:
     set_service(client, DomainIntelService(TimeoutClient()))
     response = client.get("/api/v1/domain-intel/whois", params={"domain": "example.com"})
     assert response.status_code == 504
-    assert response.json()["error"] == "upstream_timeout"
+    assert response.json()["error"]["code"] == "upstream_timeout"
 
 
 def test_dns_response_uses_consistent_envelope(client: TestClient) -> None:
     set_service(client, DomainIntelService(FakeClient()))
     body = client.get("/api/v1/domain-intel/dns", params={"domain": "example.com"}).json()
     assert body["success"] is True
-    assert set(body) == {"success", "data", "meta"}
+    assert set(body) == {"success", "data", "meta", "error"}
+    assert body["error"] is None
     assert "queried_at" in body["meta"]

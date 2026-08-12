@@ -15,7 +15,7 @@ DOMAIN_PATTERN = re.compile(
 class DomainQuery(BaseModel):
     """Validated domain query parameters."""
 
-    domain: str = Field(description="Fully qualified domain name, e.g. example.com")
+    domain: str = Field(min_length=1, max_length=253, description="Fully qualified domain name, e.g. example.com")
 
     @field_validator("domain")
     @classmethod
