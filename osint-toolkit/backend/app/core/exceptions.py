@@ -25,6 +25,14 @@ class ShodanConfigurationError(UpstreamLookupError):
     """Shodan is unavailable because its API key is missing or invalid."""
 
 
+class ShodanAccessDeniedError(UpstreamLookupError):
+    """The configured Shodan account cannot perform the requested operation."""
+
+    def __init__(self, operation: str) -> None:
+        super().__init__(f"Shodan access was denied for {operation}")
+        self.operation = operation
+
+
 class ShodanRateLimitError(UpstreamLookupError):
     """Shodan rejected a request because its API quota was exhausted."""
 

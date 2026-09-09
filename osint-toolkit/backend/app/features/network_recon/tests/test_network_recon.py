@@ -1,8 +1,11 @@
 """Network reconnaissance API tests using a fake Shodan client only."""
 
 from fastapi.testclient import TestClient
+from shodan import APIError
+import pytest
 
-from app.core.exceptions import LookupNotFoundError, ShodanRateLimitError
+from app.core.exceptions import LookupNotFoundError, ShodanAccessDeniedError, ShodanRateLimitError
+from app.features.network_recon.client import ShodanClient
 from app.features.network_recon.router import get_network_recon_service
 from app.features.network_recon.service import NetworkReconService
 
@@ -60,6 +63,18 @@ def test_invalid_ip_format_returns_422(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+def test_hostname_is_resolved_before_host_lookup(client: TestClient) -> None:
+    fake = FakeShodanClient()
+    service = NetworkReconService(fake, cache={}, resolve_hostname=lambda _: "192.0.2.44")
+    set_service(client, service)
+
+    response = client.get("/api/v1/network-recon/host", params={"ip": "example.com"})
+
+    assert response.status_code == 200
+    assert response.json()["data"]["ip"] == "192.0.2.44"
+    assert fake.host_calls == 1
+
+
 def test_rate_limited_search_returns_429(client: TestClient) -> None:
     class RateLimitedClient(FakeShodanClient):
         def search(self, query: str, page: int) -> dict[str, object]:
@@ -69,6 +84,24 @@ def test_rate_limited_search_returns_429(client: TestClient) -> None:
     response = client.get("/api/v1/network-recon/search", params={"query": "product:nginx"})
     assert response.status_code == 429
     assert response.json()["error"]["code"] == "rate_limit_exceeded"
+
+
+def test_search_access_denied_returns_actionable_403(client: TestClient) -> None:
+    class AccessDeniedClient(FakeShodanClient):
+        def search(self, query: str, page: int) -> dict[str, object]:
+            raise ShodanAccessDeniedError("search queries")
+
+    set_service(client, NetworkReconService(AccessDeniedClient(), cache={}))
+    response = client.get("/api/v1/network-recon/search", params={"query": "product:nginx"})
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "provider_access_denied"
+    assert "account plan" in response.json()["error"]["message"]
+
+
+def test_shodan_access_denied_is_translated_with_operation_context() -> None:
+    with pytest.raises(ShodanAccessDeniedError, match="search queries"):
+        ShodanClient._raise_api_error(APIError("Access denied (403 Forbidden)"), "search queries")
 
 
 def test_search_caps_results_and_passes_page_to_client(client: TestClient) -> None:

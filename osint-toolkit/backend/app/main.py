@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
-from app.core.exceptions import BreachRateLimitError, BreachUnavailableError, LookupNotFoundError, LookupTimeoutError, ShodanConfigurationError, ShodanRateLimitError, UpstreamLookupError
+from app.core.exceptions import BreachRateLimitError, BreachUnavailableError, LookupNotFoundError, LookupTimeoutError, ShodanAccessDeniedError, ShodanConfigurationError, ShodanRateLimitError, UpstreamLookupError
 from app.core.logging import configure_logging, get_logger
 from app.shared.schemas import error_envelope
 
@@ -51,6 +51,8 @@ def create_app() -> FastAPI:
         status, code, message = 502, "upstream_lookup_failed", "Lookup data is temporarily unavailable"
         if isinstance(exc, ShodanConfigurationError):
             status, code, message = 500, "provider_configuration_error", "This lookup provider is not configured"
+        elif isinstance(exc, ShodanAccessDeniedError):
+            status, code, message = 403, "provider_access_denied", f"Your Shodan account is not permitted to run {exc.operation}. Verify the API key and account plan."
         elif isinstance(exc, (ShodanRateLimitError, BreachRateLimitError)):
             status, code, message = 429, "rate_limit_exceeded", "Rate limit reached, try again later"
         elif isinstance(exc, BreachUnavailableError):

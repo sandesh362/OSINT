@@ -8,6 +8,7 @@ export function friendlyError(error: unknown): string {
   const body = error.response?.data as ApiError | undefined;
   const message = body?.error?.message;
   if (status === 422) return message ?? "Please correct the input and try again.";
+  if (status === 403) return message ?? "This account is not permitted to perform that lookup.";
   if (status === 404) return "No data found for this query.";
   if (status === 429) return `Rate limited. Try again${body?.error?.retry_after ? ` in ${body.error.retry_after} seconds` : " shortly"}.`;
   if (status === 500 || status === 503) return "The service is temporarily unavailable. Please try again later.";

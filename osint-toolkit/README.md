@@ -43,7 +43,7 @@ Endpoints:
 
 - `GET /api/v1/domain-intel/whois?domain=example.com`
 - `GET /api/v1/domain-intel/dns?domain=example.com`
-- `GET /api/v1/network-recon/host?ip=1.2.3.4`
+- `GET /api/v1/network-recon/host?ip=1.2.3.4` (a hostname such as `example.com` is also accepted)
 - `GET /api/v1/network-recon/search?query=product:%22Apache%20httpd%22&page=1`
 - `GET /api/v1/social-profiling/username?value=someuser`
 - `GET /api/v1/breach-check/email?value=someone@example.com`
@@ -58,7 +58,7 @@ The feature returns only breach name, date, exposed data-class categories, and a
 
 ## Shodan API key
 
-Create a Shodan account and place its API key in `backend/.env` as `SHODAN_API_KEY`. Never commit a real key. Missing or invalid keys return a generic server error; quota exhaustion returns HTTP 429.
+Create a Shodan account and place its API key in `backend/.env` as `SHODAN_API_KEY`. Never commit a real key. Host and search endpoints require a key with the matching Shodan API entitlement; accounts without search access receive a clear HTTP 403 response. Missing or invalid keys return a generic server error; quota exhaustion returns HTTP 429.
 
 ## Authentication seam
 

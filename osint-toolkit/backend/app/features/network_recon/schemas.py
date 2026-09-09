@@ -2,13 +2,33 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, IPvAnyAddress, field_validator
+import ipaddress
+import re
+
+from pydantic import BaseModel, Field, field_validator
+
+
+_HOSTNAME_LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
 
 
 class HostQuery(BaseModel):
-    """Validated host lookup parameters."""
+    """Validated IP address or DNS hostname for a host lookup."""
 
-    ip: IPvAnyAddress
+    ip: str = Field(min_length=1, max_length=253)
+
+    @field_validator("ip")
+    @classmethod
+    def validate_target(cls, value: str) -> str:
+        target = value.strip().rstrip(".")
+        if not target:
+            raise ValueError("host target must not be blank")
+        try:
+            return str(ipaddress.ip_address(target))
+        except ValueError:
+            labels = target.split(".")
+            if len(labels) < 2 or not all(_HOSTNAME_LABEL.fullmatch(label) for label in labels):
+                raise ValueError("host target must be an IP address or valid hostname")
+            return target.lower()
 
 
 class SearchQuery(BaseModel):
