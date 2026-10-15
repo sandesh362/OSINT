@@ -1,0 +1,44 @@
+# Local configuration and secrets; safe templates remain versioned
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.template
+
+# JavaScript dependencies and build output
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Local tooling and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# Local server logs and temporary PDF verification output
+osint-toolkit/logs/
+tmp/pdfs/

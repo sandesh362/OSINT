@@ -1,4 +1,19 @@
-import { useState } from "react"; import { getDns, getWhois } from "./api"; import type { DnsResponse, WhoisResponse } from "./types"; import { useApiCall } from "../../shared/hooks/useApiCall"; import { Button, Card, ErrorBanner, RawResponse, ResultTable, Spinner } from "../../shared/components/ui";
+import { useState } from "react";
+import { getDns, getWhois } from "./api";
+import type { DnsResponse, WhoisResponse } from "./types";
+import { useApiCall } from "../../shared/hooks/useApiCall";
+import { Field, PanelHeading, EmptyState, Button, Card, ErrorBanner, RawResponse, ResultTable, Spinner } from "../../shared/components/ui";
 const domainPattern = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
-export function DomainIntelPanel() { const [domain, setDomain] = useState(""); const [validation, setValidation] = useState<string | null>(null); const whois = useApiCall<WhoisResponse, [string]>(); const dns = useApiCall<DnsResponse, [string]>(); const submit = async (e: React.FormEvent) => { e.preventDefault(); const value = domain.trim().toLowerCase(); if (!domainPattern.test(value)) return setValidation("Enter a valid public domain, for example example.com."); setValidation(null); await Promise.all([whois.run(getWhois, value), dns.run(getDns, value)]); };
-return <Card><h2>Domain Intelligence</h2><p>Public WHOIS and DNS records.</p><form onSubmit={submit}><input value={domain} onChange={e => setDomain(e.target.value)} placeholder="example.com" aria-label="Domain" /><Button disabled={whois.loading || dns.loading}>{whois.loading || dns.loading ? <Spinner /> : "Run lookup"}</Button></form>{validation && <ErrorBanner message={validation} />}{whois.error && <ErrorBanner message={whois.error} />}{dns.error && <ErrorBanner message={dns.error} />}{whois.data && <><h3>WHOIS</h3><ResultTable rows={Object.entries(whois.data.data)} /><RawResponse value={whois.data} /></>}{dns.data && <><h3>DNS records</h3><ResultTable rows={Object.entries(dns.data.data)} /><RawResponse value={dns.data} /></>}</Card>; }
+export function DomainIntelPanel() {
+    const [domain, setDomain] = useState("");
+    const [validation, setValidation] = useState<string | null>(null);
+    const whois = useApiCall<WhoisResponse, [
+        string
+    ]>();
+    const dns = useApiCall<DnsResponse, [
+        string
+    ]>();
+    const submit = async (e: React.FormEvent) => { e.preventDefault(); const value = domain.trim().toLowerCase(); if (!domainPattern.test(value))
+        return setValidation("Enter a valid public domain, for example example.com."); setValidation(null); await Promise.all([whois.run(getWhois, value), dns.run(getDns, value)]); };
+    return <Card><PanelHeading icon="domain" title="Domain Intelligence" description="Look into domain ownership and infrastructure with public WHOIS and DNS records."/><form onSubmit={submit}><Field label="Domain name" value={domain} onChange={e => setDomain(e.target.value)} placeholder="example.com" aria-label="Domain"/><Button disabled={whois.loading || dns.loading}>{whois.loading || dns.loading ? <Spinner /> : "Run lookup"}</Button></form>{!whois.data && !dns.data && !whois.loading && !dns.loading && !whois.error && !dns.error && <EmptyState icon="domain" title="Your domain research starts here" description="Enter a public domain above to explore its registration details and DNS records."/>}{validation && <ErrorBanner message={validation}/>}{whois.error && <ErrorBanner message={whois.error}/>}{dns.error && <ErrorBanner message={dns.error}/>}{whois.data && <><h3>WHOIS</h3><ResultTable rows={Object.entries(whois.data.data)}/><RawResponse value={whois.data}/></>}{dns.data && <><h3>DNS records</h3><ResultTable rows={Object.entries(dns.data.data)}/><RawResponse value={dns.data}/></>}</Card>;
+}

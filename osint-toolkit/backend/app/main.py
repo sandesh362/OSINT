@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import ValidationError
 
 from app.api.v1.router import api_router
@@ -41,6 +41,10 @@ def create_app() -> FastAPI:
                 logger.info("module=%s action=%s target=redacted status=%s duration_ms=%s", parts[0] if parts else "api", parts[1] if len(parts) > 1 else "root", status, round((time.perf_counter() - started) * 1000, 2))
 
     app.include_router(api_router, prefix="/api/v1")
+
+    @app.get("/", include_in_schema=False)
+    def api_home() -> RedirectResponse:
+        return RedirectResponse(url="/docs")
 
     @app.get("/docs", include_in_schema=False)
     def custom_swagger_docs() -> object:

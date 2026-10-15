@@ -1,6 +1,7 @@
 """HTTP generation and one-time preview routes for investigation reports."""
 
 from typing import Annotated
+from asyncio import to_thread
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import Response
@@ -39,7 +40,7 @@ async def generate_report(
     html = html_generator.render(report)
     service.cache_report(report, html)
     if request.format == "pdf":
-        pdf = pdf_generator.render(html)
+        pdf = await to_thread(pdf_generator.render, report)
         return Response(
             content=pdf,
             media_type="application/pdf",

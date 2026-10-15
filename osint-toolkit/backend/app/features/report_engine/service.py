@@ -60,7 +60,9 @@ class ReportEngineService:
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.domain_service = domain_service or DomainIntelService()
-        self.network_service = network_service or NetworkReconService()
+        # Construct Shodan only when the network module is requested. A missing
+        # optional API key must not prevent domain-only reports from running.
+        self.network_service = network_service
         self.social_service = social_service or SocialProfilingService()
         self.breach_service = breach_service or BreachCheckService()
         self.cache = _report_cache if cache is None else cache
@@ -102,7 +104,8 @@ class ReportEngineService:
             if not request.ip:
                 return make_section(module, "skipped")
             try:
-                host = await asyncio.to_thread(self.network_service.host, str(request.ip))
+                network_service = self.network_service or NetworkReconService()
+                host = await asyncio.to_thread(network_service.host, str(request.ip))
                 data = host.model_dump(mode="json")
                 return make_section(module, "empty" if not data.get("open_ports") else "complete", data)
             except Exception:

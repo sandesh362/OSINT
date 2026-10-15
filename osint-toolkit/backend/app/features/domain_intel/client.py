@@ -18,7 +18,7 @@ class DomainIntelClient:
 
     def fetch_whois(self, domain: str) -> WhoisData:
         try:
-            record: Any = whois.whois(domain)
+            record: Any = whois.whois(domain, timeout=get_settings().whois_timeout_seconds)
         except TimeoutError as exc:
             raise LookupTimeoutError("WHOIS lookup timed out") from exc
         except Exception as exc:
